@@ -5,10 +5,10 @@
 BASS stands for Band-Adaptive Spectral-Spatial, a parallel deep neural network architecture for classifing  hyperspectral images. The idea proposed by researchers from Indian Institute of Technology (<a href="https://arxiv.org/abs/1612.00144">paper</a> for details). Hyperspectral images possess a long spectral dimension, which potentially result in long training and inference time and enormous energy consumption during the computation. In this project, BASS-Net is re-written in TensorFlow and Keras, a Dataflow programming library and Deep learing framework developed by Google. The code is translated to FPGA instructions,in which Inference is completed using Nubula and Rainman FPGA boards from Corerain technologies, and training process is completed with NVIDIA TitanX Graphics processing unit. As such, training and inference time could be greatly reduce as well as using lesser power. This work will be adapted by industries for natural language processing and system verification in the future.  
 
 Figure 1. Sample of Statlie image<br>
-<img src="http://www.ehu.eus/ccwintco/uploads/2/28/KSC.gif" width="42%" height="42%" />
+<img src="http://www.ehu.eus/ccwintco/uploads/2/28/KSC.gif" width="520" height="520" />
 
 Figure 2. Sample of Indian Pine hyperspectral image<br>
-![IndianPines](Labelled-Class-data/Indian_Pines.png = 520x390)
+![IndianPines](Labelled-Class-data/Indian_Pines.png)
 
 ### General Guidance
 
