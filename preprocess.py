@@ -1,12 +1,14 @@
 import numpy as np
 from random import shuffle
-import scipy.ndimage
 import os
 import scipy.io as io
 from sklearn.preprocessing import OneHotEncoder
 import argparse
-
-import helper
+from helper import *
+import threading
+import time
+import itertools
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data', type=str, default='Indian_pines')
@@ -23,7 +25,7 @@ else:
 
 print("Dataset: " + filename )
 
-##loading images for input and target image
+#Try loading data from the folder... Otherwise download from online
 try:
     print("Using images from Data folder...")
     input_mat = io.loadmat('./data/' + opt.data + '.mat')[filename]
@@ -79,12 +81,15 @@ print('Target_mat shape = (' + str(target_mat.shape[0]) + ',' + str(target_mat.s
 print("+-------------------------------------+\n")
 '''
 
+# Normalise image data
 input_mat = input_mat.astype(float)
 statlie_image = input_mat
 input_mat -= np.min(input_mat)
 input_mat /= np.max(input_mat)
 statlie_image_2 = input_mat
 
+# List label = list of class
+# train_idx = list of numbers, each number represent number of samples in each class.
 if mode == 'small':
     if opt.data == 'Indian_pines':
         list_labels = [2,3,5,6,8,10,11,12,14] 
@@ -99,14 +104,14 @@ if mode == 'small':
 
 else:
     if opt.data == "Indian_pines":
-    #There's some classes with lack of samples so we only using the 9 that has sufficient samples
+    # There's some classes with lack of samples so we only using the 9 that has sufficient samples
         list_labels = [2,3,5,6,8,10,11,12,14] 
         train_idx = [800, 600, 275, 350, 275, 450, 850, 250, 750] #Average    
 
     elif opt.data == "Salinas":
         list_labels = range(1,OUTPUT_CLASSES+1)
         train_idx = [750]*OUTPUT_CLASSES #was 175
-        #train_idx = [1500,2500, 1300,800, 1800, 2800, 2200, 6000, 3000, 2300, 500,1300, 500]
+        # train_idx = [1500,2500, 1300,800, 1800, 2800, 2200, 6000, 3000, 2300, 500,1300, 500]
 
     elif opt.data == 'KSC':
         print('Please be patent..........')
@@ -119,6 +124,7 @@ else:
         train_idx = [200,200,165,190,190,190,150,225,190,220,110,200]
     else:
         print("Impossible!")
+
 
 def Patch(height_index,width_index):
     """
@@ -144,6 +150,19 @@ def Patch(height_index,width_index):
         mean_normalized_patch.append(patch[i] - MEAN_ARRAY[i])
     return np.array(mean_normalized_patch)
 
+# For showing a animation only
+end_loading = False
+def animate():
+    global end_loading
+    for c in itertools.cycle(['|', '/', '-', '\\']):
+        if end_loading:
+            break
+        sys.stdout.write('\rloading '+ opt.data + ' dataset...' + c)
+        sys.stdout.flush()
+        time.sleep(0.1)
+        sys.stdout.write('\rFinished!\t')
+
+
 print("+-------------------------------------+")
 print('Input_mat shape: ' +  str(input_mat.shape) )
 
@@ -154,15 +173,12 @@ input_mat = np.transpose(input_mat,(2,0,1))
 statlie_image_3 = input_mat
 print('Input mat after transpose shape: ' +  str(input_mat.shape) )
 
-
+calib_value_for_padding = int( (PATCH_SIZE-1)/2)
 for i in range(BAND):
     MEAN_ARRAY[i] = np.mean(input_mat[i,:,:])
-    try:
-        new_input_mat.append(np.pad(input_mat[i,:,:],PATCH_SIZE/2,'constant',constant_values = 0))
-    except:
-        new_input_mat = input_mat
+    new_input_mat.append(np.pad(input_mat[i,:,:],calib_value_for_padding,'constant',constant_values = 0))
 
-print('new input_mat shape: ' + str( np.array(new_input_mat).shape) )
+print('Input_mat shape after padding: ' + str( np.array(new_input_mat).shape) )
 print("+-------------------------------------+")
 input_mat = np.array(new_input_mat)
 
@@ -170,49 +186,36 @@ class_label_counter = [0] * OUTPUT_CLASSES  #Class that
 for i in range(OUTPUT_CLASSES):
     CLASSES.append([])
 
-import time #Without calibration ~16.7sec
-start = time.time()
 
+t = threading.Thread(target=animate).start()
+start = time.time()
 calib_value = int((PATCH_SIZE-1)/2)
 count = 0
 image = []
 image_label = []
-for i in range(HEIGHT):
+problem_data_set = []
+for i in range(HEIGHT-1):
     for j in range(WIDTH-1):
         curr_inp = Patch(i,j)
-        curr_tar = target_mat[i , j] 
+        curr_tar = target_mat[i , j]
 
-        if(curr_tar!=0): #Ignore patches with unknown landcover type for the central pixel
+        if(curr_tar!=0): # Ignore patches with unknown landcover type for the central pixel
             CLASSES[curr_tar-1].append(curr_inp)
             class_label_counter[curr_tar-1] += 1
             count += 1
 
+end_loading = True
 end = time.time()
-print("Total excution time..." + str(end-start))
+print("Total excution time..." + str(end-start)+'seconds')
 print('Total number of K (things that can be identified): ' + str(count))
-helper.showClassTable(class_label_counter)
+showClassTable(class_label_counter)
 
 TRAIN_PATCH,TRAIN_LABELS,TEST_PATCH,TEST_LABELS,VAL_PATCH, VAL_LABELS = [],[],[],[],[],[]
-#FULL_TRAIN_PATCH = []
-#FULL_TRAIN_LABELS = []
+# FULL_TRAIN_PATCH = []
+# FULL_TRAIN_LABELS = []
 count = 0
 
-#print('Number of classes: (Should be equal) ' + str(len(CLASSES)) ) 
-''' old version
-for i, data in enumerate(CLASSES):
-    print('Now processing classes ' + str(i+1) + ' data')
-    if i+1 in list_labels:  #This is to get rid of the unwanted classes in IP
-        print('Class '+ str(i+1)+ ' is accepted')
-        shuffle(data)
-        TRAIN_PATCH += data[:train_idx[count]]
-        TRAIN_LABELS += [count]*train_idx[count]
-        VAL_PATCH += data[train_idx[count]:trim_index]
-        VAL_LABELS += [count]*(trim_index-train_idx[count])
-        TEST_PATCH += data[trim_index:]
-        TEST_LABELS += [count]*(len(data) - trim_index)
-        #count += 1
-'''
-#Ringo's version   
+# Ringo's version
 counter = 0 #Represent train_index position
 for i, data in enumerate(CLASSES):
     if i+1 in list_labels:
@@ -258,15 +261,15 @@ print("Size of Validation data: " + str(len(VAL_PATCH))  )
 print("Size of Testing data: " + str(len(TEST_PATCH)) )
 print("+-------------------------------------+")
 
-train_idx = range(len(TRAIN_PATCH))
+train_idx = list(range(len(TRAIN_PATCH)))
 shuffle(train_idx)
 TRAIN_PATCH = TRAIN_PATCH[train_idx]
 TRAIN_LABELS = TRAIN_LABELS[train_idx]
-test_idx = range(len(TEST_PATCH))
+test_idx = list(range(len(TEST_PATCH)))
 shuffle(test_idx)
 TEST_PATCH = TEST_PATCH[test_idx]
 TEST_LABELS = TEST_LABELS[test_idx]
-val_idx = range(len(VAL_PATCH))
+val_idx = list(range(len(VAL_PATCH)))
 shuffle(val_idx)
 VAL_PATCH = VAL_PATCH[val_idx]
 VAL_LABELS = VAL_LABELS[val_idx]
@@ -327,14 +330,13 @@ print("\nFinished processing.......\n Looking at some sample images")
 Below Code written by Ringo to Visualise lamdba distribution
 
 '''
-import helper
-helper.plot_random_spec_img(TRAIN_PATCH, TRAIN_LABELS)
-helper.plot_random_spec_img(TEST_PATCH, TEST_LABELS)
-helper.plot_random_spec_img(VAL_PATCH, VAL_LABELS)
+plot_random_spec_img(TRAIN_PATCH, TRAIN_LABELS)
+plot_random_spec_img(TEST_PATCH, TEST_LABELS)
+plot_random_spec_img(VAL_PATCH, VAL_LABELS)
 
-#Show origin statlie image
-helper.plotStatlieImage(statlie_image)
-#Show normalised statlie image
-helper.plotStatlieImage(statlie_image_2)
-#Show transposed statlie image (reflection along x=y asix)
-helper.plotStatlieImage(statlie_image_3, bird=True)
+# Show origin statlie image
+plotStatlieImage(statlie_image)
+# Show normalised statlie image
+plotStatlieImage(statlie_image_2)
+# Show transposed statlie image (reflection along x=y asix)
+plotStatlieImage(statlie_image_3, bird=True)

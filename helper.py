@@ -8,20 +8,21 @@ def plot_random_spec_img(pic, true_label):
     pic = pic[0]  #Take first data only
     from matplotlib import pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
-    from numpy import mean 
+    from numpy import mean, argmax
 
     print("Image Shape: " + str(pic.shape) )
     print("Label of this image is -> " + str(true_label[0] ) )
 
-    #Calculate mean of all elements in the 3d element 
+    title = argmax(true_label[0], axis=0)
+    # Calculate mean of all elements in the 3d element
     mean_value = mean(pic)
-    #Replace element with less than mean by zero
+    # Replace element with less than mean by zero
     pic[pic < mean_value] = 0
     
     x = []
     y = []
     z = []
-    #Coordinate position extractions 
+    # Coordinate position extractions
     for z1 in range(pic.shape[0]): 
         for x1 in range(pic.shape[1]):
             for y1 in range(pic.shape[2]):
@@ -32,14 +33,17 @@ def plot_random_spec_img(pic, true_label):
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.set_title('True class = '+ str(true_label[0]) + ' ,' + str(indianPineLUT(true_label[0])) )  
+    ax.set_title('True class = '+ str(title) + ' ,' + str(indianPineLUT(true_label[0])) )
     ax.scatter(x, y, z, color='#0606aa', marker='o', s=0.5)
     ax.set_xlabel('X Label')
     ax.set_ylabel('Spectral Label')
     ax.set_zlabel('Y Label')
     plt.show()
 
-#Arguement: data = 3D image in size (h,w,bands)
+
+
+
+# Arguement: data = 3D image in size (h,w,bands)
 def plotStatlieImage(data, bird=False):
     from matplotlib.pyplot import imshow, show, subplots, axis, figure
     print('\nPlotting a band image')
@@ -55,15 +59,17 @@ def plotStatlieImage(data, bird=False):
             axis('off')
     show()
 
+
 def showClassTable(number_of_list):
     import pandas as pd 
-    print("+------------Show Table---------------+")
+    print("\n+------------Show Table---------------+")
     lenth = len(number_of_list)
     column1 = range(1, lenth+1)
     table = {'Class#': column1, 'Number of samples': number_of_list}
     table_df = pd.DataFrame(table).to_string(index=False)
     print(table_df)   
     print("+-----------Close Table---------------+")
+
 
 
 """
