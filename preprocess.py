@@ -150,14 +150,14 @@ def Patch(height_index,width_index):
         mean_normalized_patch.append(patch[i] - MEAN_ARRAY[i])
     return np.array(mean_normalized_patch)
 
-# For showing a animation only
+# For showing an animation only
 end_loading = False
 def animate():
     global end_loading
     for c in itertools.cycle(['|', '/', '-', '\\']):
         if end_loading:
             break
-        sys.stdout.write('\rloading '+ opt.data + ' dataset...' + c)
+        sys.stdout.write('\rExtracting '+ opt.data + ' features...' + c)
         sys.stdout.flush()
         time.sleep(0.1)
         sys.stdout.write('\rFinished!\t')
@@ -206,7 +206,7 @@ for i in range(HEIGHT-1):
 
 end_loading = True
 end = time.time()
-print("Total excution time..." + str(end-start)+'seconds')
+print("\nTotal excution time..." + str(end-start)+'seconds')
 print('Total number of K (things that can be identified): ' + str(count))
 showClassTable(class_label_counter)
 

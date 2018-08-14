@@ -1,4 +1,14 @@
+killme.py
 helper.pyc
 data/*
 .DS_Store
-SIP_trainedModel/*
+__pycache__/*
+.idea
+logs/*
+test.py
+test2.py
+BASSNETlogs/*
+Linearlogs/*
+MNIST_data/*
+LENNETlogs/*
+mnist_lenet_log/*

@@ -1,3 +1,23 @@
+'''
+Arguments: whole test data, test label,
+return randomized test data, test label of 'size'
+'''
+def getValidDataset(test, test_label, size=250):
+    from numpy import array
+    from random import shuffle
+
+    assert test.shape[0] == test_label.shape[0]
+
+    idx = list(range(test.shape[0]))
+    shuffle(idx)
+    idx = idx[:size]
+    accuracy_x = []
+    accuracy_y = []
+    for i in idx:
+        accuracy_x.append(test[i])
+        accuracy_y.append(test_label[i])
+
+    return array(accuracy_x), array(accuracy_y)
 
 """
 Take first hyperspectral image from dataset and plot spectral data distribution
