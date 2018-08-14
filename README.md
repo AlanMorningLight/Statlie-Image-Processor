@@ -5,7 +5,7 @@
 BASS stands for Band-Adaptive Spectral-Spatial, a parallel deep neural network architecture for classifing  hyperspectral images. The idea proposed by researchers from Indian Institute of Technology (<a href="https://arxiv.org/abs/1612.00144">paper</a> for details). Hyperspectral images possess a long spectral dimension, which potentially result in long training and inference time and enormous energy consumption during the computation. In this project, BASS-Net is re-written in TensorFlow and Keras, a Dataflow programming library and Deep learing framework developed by Google. The code is translated to FPGA instructions,in which Inference is completed using Nubula and Rainman FPGA boards from Corerain technologies, and training process is completed with NVIDIA TitanX Graphics processing unit. As such, training and inference time could be greatly reduce as well as using lesser power. This work will be adapted by industries for natural language processing and system verification in the future.  
 
 Figure 1. Sample of Statlie image<br>
-<img src="http://www.ehu.eus/ccwintco/uploads/2/28/KSC.gif" width="520" height="520" />
+![IndianPines](Labelled-Class-data/KSC.gif)
 
 Figure 2. Sample of Indian Pine hyperspectral image<br>
 ![IndianPines](Labelled-Class-data/Indian_Pines.png)
@@ -13,7 +13,7 @@ Figure 2. Sample of Indian Pine hyperspectral image<br>
 ### General Guidance
 
 ##### Requirement
-1. Python2.7 and Python3.5 or Above
+1. Python3.5 or Above
 2. TensorFlow and Keras
 3. Dependencies listed in requirement.txt
 
@@ -31,14 +31,14 @@ Data and labels are in Tensor size (number_of_selected_features, feature_height,
 
 To run preprocess_big.py, run the following command. Available data options are Salinas, Indian_pines, KSC, Botswana, add '--size small' in the command for a smaller training model
 ```
-python2 preprocess_big.py --data Indian_pines
+python3 preprocess.py --data Indian_pines
 ```
 
 'BASS_netbyTF' is the implementation of BASS-NET in TensorFlow description. 
 * PPS Block 1 and Block 3 have been implemented, however Block 2 is current placed by just one convolutional layer. Details parameters are not yet finalised.
 
 ```
-python3 bass_netByTF.py
+python3 BASS-train.py
 ```
 
 <br>
