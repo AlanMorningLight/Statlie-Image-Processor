@@ -11,8 +11,7 @@ def getValidDataset(test, test_label, size=250):
     idx = list(range(test.shape[0]))
     shuffle(idx)
     idx = idx[:size]
-    accuracy_x = []
-    accuracy_y = []
+    accuracy_x, accuracy_y = [], []
     for i in idx:
         accuracy_x.append(test[i])
         accuracy_y.append(test_label[i])

@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.io
 from sklearn.metrics import confusion_matrix
-from random import randint
+from random import randint, shuffle
 from argparse import ArgumentParser
 from helper import getValidDataset
 import tensorflow as tf
@@ -14,8 +14,7 @@ opt = parser.parse_args()
 
 import os
 
-save_dir = 'BASSNET_Trained_model/'
-model_directory = os.path.join(os.getcwd(), save_dir)
+model_directory = os.path.join(os.getcwd(), 'BASSNET_Trained_model/')
 
 # Load MATLAB pre-processed image data
 try:
@@ -130,7 +129,7 @@ def block2_parallel(model):
 
     layer = model['block2_preprocess']
     with tf.variable_scope('band1'):
-        block2_prep = layer[:, :, :, 0]
+        block2_prep = layer[0]
         block2_prep = tf.reshape(block2_prep, (-1, 9, 22, 1))
         block2_prep = tf.transpose(block2_prep, perm=[0, 2, 1, 3])
         with tf.variable_scope('block2_part1'):
@@ -152,7 +151,7 @@ def block2_parallel(model):
 
     print(stack)
     with tf.variable_scope('band2'):
-        block2_prep = layer[:, :, :, 1]
+        block2_prep = layer[1]
         block2_prep = tf.reshape(block2_prep, (-1, 9, 22, 1))
         block2_prep = tf.transpose(block2_prep, perm=[0, 2, 1, 3])
         with tf.variable_scope('block2_part1'):
@@ -173,7 +172,7 @@ def block2_parallel(model):
     print(stack)
 
     with tf.variable_scope('band3'):
-        block2_prep = layer[:, :, :, 2]
+        block2_prep = layer[2]
         block2_prep = tf.reshape(block2_prep, (-1, 9, 22, 1))
         block2_prep = tf.transpose(block2_prep, perm=[0, 2, 1, 3])
         with tf.variable_scope('block2_part1'):
@@ -194,7 +193,7 @@ def block2_parallel(model):
     print(stack)
 
     with tf.variable_scope('band4'):
-        block2_prep = layer[:, :, :, 3]
+        block2_prep = layer[3]
         block2_prep = tf.reshape(block2_prep, (-1, 9, 22, 1))
         block2_prep = tf.transpose(block2_prep, perm=[0, 2, 1, 3])
         with tf.variable_scope('block2_part1'):
@@ -215,7 +214,7 @@ def block2_parallel(model):
     print(stack)
 
     with tf.variable_scope('band5'):
-        block2_prep = layer[:, :, :, 4]
+        block2_prep = layer[4]
         block2_prep = tf.reshape(block2_prep, (-1, 9, 22, 1))
         block2_prep = tf.transpose(block2_prep, perm=[0, 2, 1, 3])
         with tf.variable_scope('block2_part1'):
@@ -236,7 +235,7 @@ def block2_parallel(model):
     print(stack)
 
     with tf.variable_scope('band6'):
-        block2_prep = layer[:, :, :, 5]
+        block2_prep = layer[5]
         block2_prep = tf.reshape(block2_prep, (-1, 9, 22, 1))
         block2_prep = tf.transpose(block2_prep, perm=[0, 2, 1, 3])
         with tf.variable_scope('block2_part1'):
@@ -257,7 +256,7 @@ def block2_parallel(model):
     print(stack)
 
     with tf.variable_scope('band7'):
-        block2_prep = layer[:, :, :, 6]
+        block2_prep = layer[6]
         block2_prep = tf.reshape(block2_prep, (-1, 9, 22, 1))
         block2_prep = tf.transpose(block2_prep, perm=[0, 2, 1, 3])
         with tf.variable_scope('block2_part1'):
@@ -278,7 +277,7 @@ def block2_parallel(model):
     print(stack)
 
     with tf.variable_scope('band8'):
-        block2_prep = layer[:, :, :, 7]
+        block2_prep = layer[7]
         block2_prep = tf.reshape(block2_prep, (-1, 9, 22, 1))
         block2_prep = tf.transpose(block2_prep, perm=[0, 2, 1, 3])
         with tf.variable_scope('block2_part1'):
@@ -299,7 +298,7 @@ def block2_parallel(model):
     print(stack)
 
     with tf.variable_scope('band9'):
-        block2_prep = layer[:, :, :, 8]
+        block2_prep = layer[8]
         block2_prep = tf.reshape(block2_prep, (-1, 9, 22, 1))
         block2_prep = tf.transpose(block2_prep, perm=[0, 2, 1, 3])
         with tf.variable_scope('block2_part1'):
@@ -320,7 +319,7 @@ def block2_parallel(model):
     print(stack)
 
     with tf.variable_scope('band10'):
-        block2_prep = layer[:, :, :, 9]
+        block2_prep = layer[9]
         block2_prep = tf.reshape(block2_prep, (-1, 9, 22, 1))
         block2_prep = tf.transpose(block2_prep, perm=[0, 2, 1, 3])
         with tf.variable_scope('block2_part1'):
@@ -341,6 +340,7 @@ def block2_parallel(model):
         stack = tf.concat([stack, block2_part5], axis=1)
     print(stack)
     return stack
+
 
 # Define BASSNET archicture
 def bassnet(statlieImg, prob):
@@ -369,17 +369,29 @@ def bassnet(statlieImg, prob):
         sequence['block1_conv2'] = layer
 
 # Block 2 Implementation
+    with tf.variable_scope('block2_preprocess_GPU'):
+        layer = sequence['block1_conv2']
+        layer = tf.reshape(layer, [-1, 9, 220])
+
+        container = tf.split(layer, num_or_size_splits=10, axis=2)
+        sequence['block2_preprocess_GPU'] = container
+
+        for i in range(10):
+                scope = "BAND_"+str(i)
+                with tf.variable_scope(scope):
+                    print(tf.get_variable_scope())
 
     with tf.variable_scope('block2_preprocess'):
         layer = sequence['block1_conv2']
         layer = tf.reshape(layer, [-1, 9, 220])
-        layer = tf.reshape(layer, [-1, 9, 22, 10])
+        layer = tf.split(layer, num_or_size_splits=10, axis=2)
         sequence['block2_preprocess'] = layer
 
     with tf.variable_scope('block2_parallel'):
         parallel_model = block2_parallel(sequence)
         sequence['block2_end'] = parallel_model
 
+    '''
     with tf.variable_scope('block2'):
         layer = sequence['block2_preprocess']
     
@@ -424,7 +436,7 @@ def bassnet(statlieImg, prob):
         sequence['block3_entry_point'] = block3_entry3
 
 # End of geniue block 2
-
+    '''
 # Begin of fake block 2
     with tf.variable_scope('block2_conv1_fake'):
         layer = sequence['block1_conv2']
@@ -474,6 +486,7 @@ def bassnet(statlieImg, prob):
     sequence['predict_class_number'] = tf.argmax(y_predict, axis=1)
     return sequence
 
+a =8
 
 graph = tf.Graph()
 with graph.as_default():
@@ -498,31 +511,33 @@ with graph.as_default():
     accuracy = tf.reduce_mean(tf.cast(correction, tf.float32))
 
     saver = tf.train.Saver()
+
+
     with tf.Session(graph=graph) as session:
         writer = tf.summary.FileWriter("BASSNETlogs/", session.graph)
-       
-        if os.path.isdir(save_dir):
-            saver.restore(session, model_directory)
-       # saver.restore(session, model_directory)
+
+        if os.path.isdir(model_directory):
+            saver.restore(session, 'BASSNET_Trained_model/')
+
         session.run(tf.global_variables_initializer())
 
         total_iterations = 0
 
-        def train(num_iterations, train_batch_size=200):
+        def train(num_iterations, train_batch_size=200, s=250, training_data=training_data, training_label=training_label, test_data=test_data, test_label=test_label, ):
             global total_iterations
             for i in range(total_iterations, total_iterations + num_iterations):
-
-                for _ in range(6):
-                    idx = randint(1, 3400)
-                    train_batch = training_data[idx: idx + train_batch_size]
-                    train_batch_label = training_label[idx:idx + train_batch_size]
+                idx = randint(1, 2550)
+                for x in range(10):
+                    train_batch = training_data[idx*x: idx*x + train_batch_size]
+                    train_batch_label = training_label[idx*x:idx*x + train_batch_size]
                     feed_dict_train = {img_entry: train_batch, img_label: train_batch_label, prob: 0.2}
                     session.run(optimizer, feed_dict=feed_dict_train)
 
                 print('Finished training an epoch...')
-                # feed_dict_validate = {img_entry: validation_data, img_label: validation_label, prob: 1.0}
-                if i % 3 == 0:
-                    val_x, val_y = getValidDataset(test_data, test_label)
+                if i % 10 == 0:
+                    training_data, training_label, test_data, test_label = trainTestSwap(training_data, training_label, test_data, test_label, idx, size=s)
+                    # val_x, val_y = getValidDataset(test_data, test_label)
+                    val_x, val_y = test_data[:s], test_label[:s]
                     feed_dict_validate = {img_entry: val_x, img_label: val_y, prob: 1.0}
                     acc = session.run(accuracy, feed_dict=feed_dict_validate)
                     msg = "Optimization Iteration: {0:>6}, Training Accuracy: {1:>6.1%}"
@@ -553,13 +568,24 @@ with graph.as_default():
             con_mat = confusion_matrix(class_true, class_pred)
             print(con_mat)
 
-        def cross_validate():
+        def trainTestSwap(training_data, training_label, test_data, test_label, idx, size=250):
+            a, b = test_data[:size], test_label[:size]
+            c, d = training_data[idx: idx+size], training_label[idx: idx+size]
+
+            test_data, test_label = test_data[size:], test_label[size:]
+            test_data, test_label = np.concatenate((test_data, c), axis=0), np.concatenate((test_label, d), axis=0)
+
+            training_data[idx: idx + size], training_label[idx: idx + size] = a, b
+
+            return training_data, training_label, test_data, test_label
+
+
+        def cross_validate(training_data, training_label, test_):
             print("This is not necessary as we have large dataset and it's expensive to do!")
 
-        train(num_iterations=30, train_batch_size=200)
+
+        train(num_iterations=12000, train_batch_size=200)
         saver.save(session, model_directory)
-
         test()
-        session.close()
-
+       # trainTestSwap(training_data, training_label, test_data, test_label,  1, size=250)
         print('End session')

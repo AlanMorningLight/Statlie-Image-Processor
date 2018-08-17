@@ -106,7 +106,7 @@ else:
     if opt.data == "Indian_pines":
     # There's some classes with lack of samples so we only using the 9 that has sufficient samples
         list_labels = [2,3,5,6,8,10,11,12,14] 
-        train_idx = [800, 600, 275, 350, 275, 450, 850, 250, 750] #Average    
+        train_idx = [800, 600, 275, 350, 275, 450, 850, 430, 750] #Average
 
     elif opt.data == "Salinas":
         list_labels = range(1,OUTPUT_CLASSES+1)
@@ -150,14 +150,14 @@ def Patch(height_index,width_index):
         mean_normalized_patch.append(patch[i] - MEAN_ARRAY[i])
     return np.array(mean_normalized_patch)
 
-# For showing an animation only
+# For showing a animation only
 end_loading = False
 def animate():
     global end_loading
     for c in itertools.cycle(['|', '/', '-', '\\']):
         if end_loading:
             break
-        sys.stdout.write('\rExtracting '+ opt.data + ' features...' + c)
+        sys.stdout.write('\rExtracting '+ opt.data + ' dataset features...' + c)
         sys.stdout.flush()
         time.sleep(0.1)
         sys.stdout.write('\rFinished!\t')
@@ -206,7 +206,7 @@ for i in range(HEIGHT-1):
 
 end_loading = True
 end = time.time()
-print("\nTotal excution time..." + str(end-start)+'seconds')
+print("Total excution time..." + str(end-start)+'seconds')
 print('Total number of K (things that can be identified): ' + str(count))
 showClassTable(class_label_counter)
 
